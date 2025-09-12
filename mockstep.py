@@ -58,7 +58,7 @@ def generate_walking_acceleration(step):
 
     return x, y, z
 
-def run_simulation(emulator):
+def run_simulation(emulator, bar_width=50, sine_width=60, sine_height=9):
     """
     Contains the main loop for sending sensor data to the emulator.
     """
@@ -67,16 +67,18 @@ def run_simulation(emulator):
     was_rising = False
     frequency = 1.25  # Same frequency as in generate_walking_acceleration
     
-    # Initialize the dual graph with appropriate ranges
+    # Initialize the dual graph with dynamic dimensions
     dual_graph = DualGraph(
-        bar_width=50, 
+        bar_width=bar_width, 
         bar_range=(Y_BASELINE - AMPLITUDE, Y_BASELINE + AMPLITUDE),
-        sine_width=60, 
+        sine_width=sine_width, 
+        sine_height=sine_height,
         sine_range=(-1, 1)
     )
     
-    print("\nSimulating walking steps and displaying live graph...")
-    print("-" * 58)  # Adjusted width for new display
+    print(f"\nSimulating walking steps and displaying live graph...")
+    print(f"Display size: Bar={bar_width}, Sine={sine_width}x{sine_height}")
+    print("-" * max(bar_width + 20, sine_width + 20))  # Dynamic width
     print()  # Extra space for the graph area
     
     try:
@@ -110,6 +112,14 @@ def main():
     """
     Handles argument parsing, emulator connection, and starts the simulation.
     """
+    # Size presets for different display needs
+    SIZE_PRESETS = {
+        'small': {'bar_width': 30, 'sine_width': 40, 'sine_height': 7},
+        'medium': {'bar_width': 50, 'sine_width': 60, 'sine_height': 9},
+        'large': {'bar_width': 80, 'sine_width': 100, 'sine_height': 15},
+        'xl': {'bar_width': 120, 'sine_width': 150, 'sine_height': 20}
+    }
+    
     parser = argparse.ArgumentParser(description="Simulate walking steps on an Android emulator and display a live graph.")
     parser.add_argument(
         "--port",
@@ -123,7 +133,38 @@ def main():
         default=None,
         help="The auth token. Tries to read from ~/.emulator_console_auth_token if not provided."
     )
+    
+    # Display size arguments
+    parser.add_argument(
+        "--size",
+        type=str,
+        choices=['small', 'medium', 'large', 'xl'],
+        default='medium',
+        help="Preset display size (default: medium). Individual dimension args override preset values."
+    )
+    parser.add_argument(
+        "--bar-width",
+        type=int,
+        help="Width of the accelerometer bar graph (overrides preset)."
+    )
+    parser.add_argument(
+        "--sine-width",
+        type=int,
+        help="Width of the sine wave graph (overrides preset)."
+    )
+    parser.add_argument(
+        "--sine-height",
+        type=int,
+        help="Height of the sine wave graph (overrides preset)."
+    )
+    
     args = parser.parse_args()
+    
+    # Get dimensions from preset, then override with any individual args
+    preset = SIZE_PRESETS[args.size]
+    bar_width = args.bar_width if args.bar_width is not None else preset['bar_width']
+    sine_width = args.sine_width if args.sine_width is not None else preset['sine_width']
+    sine_height = args.sine_height if args.sine_height is not None else preset['sine_height']
 
     emulator_host = "localhost"
     emulator_port = args.port
@@ -141,7 +182,7 @@ def main():
     emulator = connect_to_emulator(emulator_host, emulator_port, auth_token)
 
     if emulator:
-        run_simulation(emulator)
+        run_simulation(emulator, bar_width, sine_width, sine_height)
 
 if __name__ == "__main__":
     main()

@@ -7,7 +7,7 @@ class DataBuffer:
     """
     Circular buffer to store recent data points for visualization.
     """
-    def __init__(self, size=100):
+    def __init__(self, size=60):
         self.size = size
         self.buffer = [0.0] * size
         self.index = 0
@@ -149,11 +149,11 @@ class DualGraph:
     Combines bar graph and sine wave for dual visualization with in-place updates.
     """
     def __init__(self, bar_width=50, bar_range=(7.8, 11.8), 
-                 sine_width=60, sine_range=(-1, 1)):
+                 sine_width=60, sine_height=9, sine_range=(-1, 1)):
         self.bar_graph = BarGraph(bar_width, bar_range, "Accel")
-        self.sine_graph = SineWaveGraph(sine_width, 9, sine_range)
+        self.sine_graph = SineWaveGraph(sine_width, sine_height, sine_range)
         self.first_render = True
-        self.total_lines = 12  # 1 bar + 1 step impact + 1 spacing + 9 sine wave lines
+        self.total_lines = 3 + sine_height  # 1 bar + 1 step impact + 1 spacing + sine_height lines
     
     def plot(self, accel_value, sine_value, step_impact=False):
         """Plot both the accelerometer bar and sine wave point with in-place updates."""
