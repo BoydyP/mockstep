@@ -9,10 +9,12 @@ It is designed to help test and debug applications that rely on Android's step c
 ## Features
 
 *   **Realistic Simulation:** Generates a sine wave of accelerometer data corresponding to a firm walk at **120 steps per minute (2 steps/second)**.
-*   **Dual Visualization:** 
-    - **Accelerometer Bar Graph:** Shows the actual sensor values (7.8-11.7 range) being sent to the emulator
+*   **Triple Visualization:** 
+    - **Accelerometer Bar Graph:** Shows the actual sensor values (7.8-11.8 range) being sent to the emulator
+    - **Dual Step Lines:** Continuous walking state animation + explicit step landing notifications
     - **Mathematical Sine Wave:** Displays the pure sine function (-1 to +1) that drives the simulation
-*   **Live Step Detection:** Visual markers show when foot impacts are detected (sine wave peaks)
+*   **Live Step Detection:** Visual markers and explicit notifications when foot impacts are detected (sine wave peaks)
+*   **Flexible Display Sizes:** Four presets (small, medium, large, xl) plus custom dimension options
 *   **Emulator Integration:** Connects directly to the Android emulator's Telnet port for sensor manipulation.
 *   **Authentication:** Automatically handles authentication by reading the token from the default location (`~/.emulator_console_auth_token`).
 
@@ -38,21 +40,38 @@ Open a terminal or command prompt, navigate to the directory containing `mockste
 This command connects to the default port (`5554`) and uses the automatically found auth token.
 
 ```bash
-python mockstep.py
+python3 mockstep.py
+```
+
+**Display Size Options:**
+Choose from four preset sizes or customize individual dimensions.
+
+```bash
+python3 mockstep.py --size small     # Quick testing (30x40x12)
+python3 mockstep.py --size medium    # Standard demo (50x60x16) - default
+python3 mockstep.py --size large     # Detailed analysis (80x100x25)
+python3 mockstep.py --size xl        # Maximum visibility (120x150x35)
+```
+
+**Custom Dimensions:**
+Override individual dimensions for specific needs.
+
+```bash
+python3 mockstep.py --bar-width 100 --sine-height 20
 ```
 
 **Connecting to a Different Port:**
 If your emulator is running on a different port (e.g., `5556`), use the `--port` argument.
 
 ```bash
-python mockstep.py --port 5556
+python3 mockstep.py --port 5556
 ```
 
 **Providing the Token Manually:**
 If the script cannot find your auth token file, you can provide it directly with the `--token` argument.
 
 ```bash
-python mockstep.py --token <your_auth_token>
+python3 mockstep.py --token <your_auth_token>
 ```
 
 ### 3. Stop the Simulation
@@ -69,66 +88,70 @@ The simulation is based on generating a sine wave to represent the vertical acce
 
 
 ```
-~/mockstep main* ❯ python3 mockstep.py                                   
-Read auth token from /Users/boydp/.emulator_console_auth_token
+~/mockstep main* ❯ python3 mockstep.py --size large                                   
+Read auth token from /Users/boydypd/.emulator_console_auth_token
 Connected and authenticated with emulator on port 5554.
 
 Simulating walking steps and displaying live graph...
-----------------------------------------------------------
+Display size: Bar=80, Sine=100x25
+Walking parameters: frequency=2.5, sleep=0.1s, amplitude=2.0
+------------------------------------------------------------------------------------------------------------------------
 
-Accel: 11.70 | ################################################
+Accel: 10.43 | ####################################################
+👟 Step: [▬▬▬] Ready
+🦶 STEP LANDED! 🦶
 
- 1.0 |                                                           *
- 0.5 |
- 0.0 |***********************************************************
--0.5 |
--1.0 |
-
-Accel: 11.00 | #######################################
-
- 1.0 |                                                          *
- 0.5 |                                                           *
- 0.0 |**********************************************************
--0.5 |
--1.0 |
-
-🦶 STEP IMPACT - Peak detected in sine wave! 🦶
-
-Accel:  8.66 | ##########
-
- 1.0 |                                                         *
- 0.5 |                                                          *
- 0.0 |*********************************************************
--0.5 |                                                           *
--1.0 |
-
-Accel:  7.88 | #
-
- 1.0 |                                                        *
- 0.5 |                                                         *
- 0.0 |********************************************************
--0.5 |                                                          *
--1.0 |                                                           *
-
-Accel: 11.68 | ################################################
-
- 1.0 |                                                      *    *
- 0.5 |                                                       *
- 0.0 |******************************************************    *
--0.5 |                                                        *
--1.0 |                                                         *
-
-🦶 STEP IMPACT - Peak detected in sine wave! 🦶
+ 1.00|       .    .    .    .    .    .    .    .    .
+ 0.92|  .                                                 .    .    .                      ·    ·    •
+ 0.83|                                                                   .    .  .    .
+ 0.75|                                                                 .    .      .    .
+ 0.67|                                                       .    .                          ·    ·
+ 0.58|    .                                             .                                              •
+ 0.50|         .    .                         .    .
+ 0.42|                   .               .
+ 0.33|                        .     .
+ 0.25|                    .    .   .    .
+ 0.17|               .                       .
+ 0.08|          .                                 .
+ 0.0 |     .                                           .                                                •
+-0.08|.                                                     .    .                                 ·
+-0.17|                                                                .                  .    ·
+-0.25|                                                                     .        .
+-0.33|                                                                         ..    .
+-0.42|                                                               .    .               .
+-0.50|                                                          .                              ·
+-0.58| .    .                                         .    .                                        ·    ● ← Current: -0.60
+-0.67|           .                               .
+-0.75|                .    .           .    .
+-0.83|                  .    .  . .  .    .
+-0.92|   .    .    .                           .    .    .
+-1.00|                                                        .    .    .    .    .    .    ·    ·    •
 ```
 
-## New Dual Visualization Features
+## Enhanced Visualization Features
 
-The enhanced version now shows both:
+The current version provides a comprehensive triple visualization:
 
-1. **Accelerometer Bar Graph** - The actual sensor values being sent to the emulator
-2. **Mathematical Sine Wave** - A scrolling visualization of the pure sine function (-1 to +1) that drives the simulation
+### **1. Accelerometer Bar Graph**
+Shows the actual sensor values (7.8-11.8 m/s²) being sent to the Android emulator - this is what your step-counting app will receive.
 
-This dual display helps you understand:
+### **2. Dual Step Lines**
+- **Top Line**: Continuous walking state animation showing all transitions:
+  - `👟 Step: [▬▬▬] Ready` - Foot flat on ground
+  - `👟 Step: [▬▬▬] Lifting...` - Foot lifting off
+  - `👟 Step: [▬▬▬] ↗ Striding` - Foot in air, approaching peak
+  - `👟 Step: [▬▬▬] ↘ Landing!` - Foot landing (step detected)
+- **Bottom Line**: Explicit step notifications - `🦶 STEP LANDED! 🦶` appears only when a step is detected
+
+### **3. Mathematical Sine Wave**
+A scrolling visualization of the pure sine function (-1 to +1) that drives the simulation, with trail effects showing temporal progression:
+- `●` Current position (solid dot)
+- `•` Recent trail (medium dot)
+- `·` Older trail (light dot)  
+- `.` Very old trail (faint dot)
+
+This triple display helps you understand:
 - How the mathematical sine wave translates to physical accelerometer readings
-- The relationship between sine wave peaks and step detection
+- The exact timing and detection of each step impact
+- The relationship between walking states and sensor data
 - The frequency and amplitude of the walking simulation in real-time
