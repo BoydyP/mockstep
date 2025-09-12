@@ -3,6 +3,55 @@ Terminal-based graphing package for real-time data visualization.
 Provides bar graphs and smooth sine wave displays using ASCII characters.
 """
 
+class ShoeAnimation:
+    """
+    Handles ASCII shoe animation that progresses through walking states based on sine wave position.
+    """
+    def __init__(self):
+        self.shoe_states = {
+            'ready': "👟 Step: [▬▬▬] Ready",
+            'lifting': "👟 Step: [▬▬▬] Lifting...",
+            'striding': "👟 Step: [▬▬▬] ↗ Striding",
+            'landing': "👟 Step: [▬▬▬] ↘ Landing!"
+        }
+        self.landing_message = "🦶 STEP LANDED! 🦶"
+    
+    def get_shoe_state(self, sine_value, step_detected):
+        """
+        Determine the appropriate shoe state based on sine wave position and step detection.
+        
+        Args:
+            sine_value: Current sine wave value (-1 to 1)
+            step_detected: Boolean indicating if a step peak was detected
+            
+        Returns:
+            String with the appropriate shoe animation for current walking phase
+        """
+        if step_detected and sine_value >= 0.5:
+            # Landing state - triggered at sine wave peaks (step detection)
+            return self.shoe_states['landing']
+        elif sine_value >= 0.3:
+            # Striding state - foot in air, approaching peak
+            return self.shoe_states['striding']
+        elif sine_value >= -0.3:
+            # Lifting state - foot lifting off ground
+            return self.shoe_states['lifting']
+        else:
+            # Ready state - foot flat on ground, between steps
+            return self.shoe_states['ready']
+    
+    def get_landing_line(self, step_detected):
+        """
+        Get the landing line that only shows when a step is detected.
+        
+        Args:
+            step_detected: Boolean indicating if a step peak was detected
+            
+        Returns:
+            String with landing message if step detected, empty string otherwise
+        """
+        return self.landing_message if step_detected else ""
+
 class DataBuffer:
     """
     Circular buffer to store recent data points for visualization.
@@ -152,8 +201,9 @@ class DualGraph:
                  sine_width=60, sine_height=9, sine_range=(-1, 1)):
         self.bar_graph = BarGraph(bar_width, bar_range, "Accel")
         self.sine_graph = SineWaveGraph(sine_width, sine_height, sine_range)
+        self.shoe_animation = ShoeAnimation()
         self.first_render = True
-        self.total_lines = 3 + sine_height  # 1 bar + 1 step impact + 1 spacing + sine_height lines
+        self.total_lines = 4 + sine_height  # 1 bar + 1 shoe animation + 1 landing line + 1 spacing + sine_height lines
     
     def plot(self, accel_value, sine_value, step_impact=False):
         """Plot both the accelerometer bar and sine wave point with in-place updates."""
@@ -172,12 +222,15 @@ class DualGraph:
         bar = '#' * bar_length
         print(f"Accel: {accel_value:5.2f} | {bar}")
         
-        # Render step impact message (after bar, before wave)
+        # Render shoe animation (after bar, before wave)
         print("\033[2K", end="")  # Clear line
-        if step_impact:
-            print("STEP IMPACT - Peak detected in sine wave")
-        else:
-            print()  # Empty line for consistent spacing
+        shoe_state = self.shoe_animation.get_shoe_state(sine_value, step_impact)
+        print(shoe_state)
+        
+        # Render landing line (only shows when step lands)
+        print("\033[2K", end="")  # Clear line
+        landing_line = self.shoe_animation.get_landing_line(step_impact)
+        print(landing_line)
         
         # Spacing line
         print("\033[2K")  # Clear line and move to next
