@@ -9,7 +9,10 @@ It is designed to help test and debug applications that rely on Android's step c
 ## Features
 
 *   **Realistic Simulation:** Generates a sine wave of accelerometer data corresponding to a firm walk at **120 steps per minute (2 steps/second)**.
-*   **Live Data Graph:** Displays a real-time, text-based graph of the vertical acceleration (`y-axis`) being sent to the emulator.
+*   **Dual Visualization:** 
+    - **Accelerometer Bar Graph:** Shows the actual sensor values (7.8-11.7 range) being sent to the emulator
+    - **Mathematical Sine Wave:** Displays the pure sine function (-1 to +1) that drives the simulation
+*   **Live Step Detection:** Visual markers show when foot impacts are detected (sine wave peaks)
 *   **Emulator Integration:** Connects directly to the Android emulator's Telnet port for sensor manipulation.
 *   **Authentication:** Automatically handles authentication by reading the token from the default location (`~/.emulator_console_auth_token`).
 
@@ -66,38 +69,66 @@ The simulation is based on generating a sine wave to represent the vertical acce
 
 
 ```
-~/mockstep main* ❯ python3 mockstep.py                                   17:44:36
+~/mockstep main* ❯ python3 mockstep.py                                   
 Read auth token from /Users/boydp/.emulator_console_auth_token
 Connected and authenticated with emulator on port 5554.
 
 Simulating walking steps and displaying live graph...
 ----------------------------------------------------------
- 9.80 | #########################
-11.70 | ################################################
-11.00 | #######################################
--------------------- STEP IMPACT --------------------
- 8.66 | ##########
- 7.88 | #
- 9.73 | ########################
-11.68 | ################################################
-11.05 | ########################################
--------------------- STEP IMPACT --------------------
- 8.71 | ###########
- 7.86 |
- 9.67 | #######################
-11.65 | ################################################
-11.10 | #########################################
--------------------- STEP IMPACT --------------------
- 8.77 | ############
- 7.85 |
- 9.60 | ######################
-11.63 | ###############################################
-11.15 | #########################################
--------------------- STEP IMPACT --------------------
- 8.83 | ############
- 7.84 |
- 9.54 | #####################
-11.60 | ###############################################
-11.20 | ##########################################
--------------------- STEP IMPACT --------------------
+
+Accel: 11.70 | ################################################
+
+ 1.0 |                                                           *
+ 0.5 |
+ 0.0 |***********************************************************
+-0.5 |
+-1.0 |
+
+Accel: 11.00 | #######################################
+
+ 1.0 |                                                          *
+ 0.5 |                                                           *
+ 0.0 |**********************************************************
+-0.5 |
+-1.0 |
+
+🦶 STEP IMPACT - Peak detected in sine wave! 🦶
+
+Accel:  8.66 | ##########
+
+ 1.0 |                                                         *
+ 0.5 |                                                          *
+ 0.0 |*********************************************************
+-0.5 |                                                           *
+-1.0 |
+
+Accel:  7.88 | #
+
+ 1.0 |                                                        *
+ 0.5 |                                                         *
+ 0.0 |********************************************************
+-0.5 |                                                          *
+-1.0 |                                                           *
+
+Accel: 11.68 | ################################################
+
+ 1.0 |                                                      *    *
+ 0.5 |                                                       *
+ 0.0 |******************************************************    *
+-0.5 |                                                        *
+-1.0 |                                                         *
+
+🦶 STEP IMPACT - Peak detected in sine wave! 🦶
 ```
+
+## New Dual Visualization Features
+
+The enhanced version now shows both:
+
+1. **Accelerometer Bar Graph** - The actual sensor values being sent to the emulator
+2. **Mathematical Sine Wave** - A scrolling visualization of the pure sine function (-1 to +1) that drives the simulation
+
+This dual display helps you understand:
+- How the mathematical sine wave translates to physical accelerometer readings
+- The relationship between sine wave peaks and step detection
+- The frequency and amplitude of the walking simulation in real-time

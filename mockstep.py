@@ -3,25 +3,11 @@ import time
 import math
 import argparse
 import os
+from terminal_graphs import DualGraph
 
-# --- Graphing Constants ---
-GRAPH_WIDTH = 50
+# --- Simulation Constants ---
 AMPLITUDE = 2.0
 Y_BASELINE = 9.8
-
-def plot_data_point(y_value):
-    """
-    Plots a single y-value as a text-based bar on the command line.
-    """
-    min_y = Y_BASELINE - AMPLITUDE
-    max_y = Y_BASELINE + AMPLITUDE
-
-    # Ensure the value is within bounds to prevent normalization errors at device level
-    y_value_clamped = max(min_y, min(y_value, max_y))
-    normalized_value = (y_value_clamped - min_y) / (max_y - min_y)
-    bar_length = int(normalized_value * GRAPH_WIDTH)
-    bar = '#' * bar_length
-    print(f"{y_value:5.2f} | {bar}")
 
 
 def connect_to_emulator(host, port, auth_token):
@@ -79,24 +65,41 @@ def run_simulation(emulator):
     step_counter = 0
     previous_y = Y_BASELINE
     was_rising = False
+    frequency = 1.25  # Same frequency as in generate_walking_acceleration
+    
+    # Initialize the dual graph with appropriate ranges
+    dual_graph = DualGraph(
+        bar_width=50, 
+        bar_range=(Y_BASELINE - AMPLITUDE, Y_BASELINE + AMPLITUDE),
+        sine_width=60, 
+        sine_range=(-1, 1)
+    )
+    
     print("\nSimulating walking steps and displaying live graph...")
-    print("-" * (GRAPH_WIDTH + 8))
+    print("-" * 58)  # Adjusted width for new display
+    print()  # Extra space for the graph area
+    
     try:
         while True:
             x, y, z = generate_walking_acceleration(step_counter)
             set_sensor_data(emulator, "acceleration", x, y, z)
-            plot_data_point(y)
-
+            
+            # Calculate the pure sine value for visualization
+            sine_value = math.sin(frequency * step_counter)
+            
+            # Step detection logic
             is_rising_now = y > previous_y
-            if was_rising and not is_rising_now:
-                print("-------------------- STEP IMPACT --------------------")
+            step_detected = was_rising and not is_rising_now
+            
+            # Plot with step impact notification in correct position
+            dual_graph.plot(y, sine_value, step_impact=step_detected)
             
             was_rising = is_rising_now
             previous_y = y
             step_counter += 1
             time.sleep(0.1)
     except KeyboardInterrupt:
-        print("\nStopping simulation.")
+        print("\n\nStopping simulation.")
     finally:
         print("Resetting sensor data.")
         set_sensor_data(emulator, "acceleration", 0, 9.8, 0)
