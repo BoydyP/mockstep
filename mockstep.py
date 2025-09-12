@@ -65,12 +65,17 @@ def run_simulation(emulator, bar_width=50, sine_width=60, sine_height=9):
     step_counter = 0
     previous_y = Y_BASELINE
     was_rising = False
-    frequency = 1.25  # Same frequency as in generate_walking_acceleration
+    start_time = time.time()
+    
+    # Core tunable parameters for walking pace control
+    frequency = 1.25      # Tunable: walking pace (steps per time)
+    sleep_time = 0.1      # Tunable: update rate between iterations
+    amplitude = AMPLITUDE # Tunable: step intensity/force
     
     # Initialize the dual graph with dynamic dimensions
     dual_graph = DualGraph(
         bar_width=bar_width, 
-        bar_range=(Y_BASELINE - AMPLITUDE, Y_BASELINE + AMPLITUDE),
+        bar_range=(Y_BASELINE - amplitude, Y_BASELINE + amplitude),
         sine_width=sine_width, 
         sine_height=sine_height,
         sine_range=(-1, 1)
@@ -78,18 +83,21 @@ def run_simulation(emulator, bar_width=50, sine_width=60, sine_height=9):
     
     print(f"\nSimulating walking steps and displaying live graph...")
     print(f"Display size: Bar={bar_width}, Sine={sine_width}x{sine_height}")
+    print(f"Walking parameters: frequency={frequency}, sleep={sleep_time}s, amplitude={amplitude}")
     print("-" * max(bar_width + 20, sine_width + 20))  # Dynamic width
     print()  # Extra space for the graph area
     
     try:
         while True:
+            # Generate accelerometer data using integer step counter (for consistent step detection)
             x, y, z = generate_walking_acceleration(step_counter)
             set_sensor_data(emulator, "acceleration", x, y, z)
             
-            # Calculate the pure sine value for visualization
+            # Calculate sine value for visualization that exactly matches accelerometer data
+            # Both use the same sine calculation to ensure perfect synchronization
             sine_value = math.sin(frequency * step_counter)
             
-            # Step detection logic
+            # Step detection logic (uses integer-based y values for accuracy)
             is_rising_now = y > previous_y
             step_detected = was_rising and not is_rising_now
             
@@ -99,7 +107,7 @@ def run_simulation(emulator, bar_width=50, sine_width=60, sine_height=9):
             was_rising = is_rising_now
             previous_y = y
             step_counter += 1
-            time.sleep(0.1)
+            time.sleep(sleep_time)
     except KeyboardInterrupt:
         print("\n\nStopping simulation.")
     finally:
@@ -112,12 +120,12 @@ def main():
     """
     Handles argument parsing, emulator connection, and starts the simulation.
     """
-    # Size presets for different display needs
+    # Size presets for different display needs - increased row counts to reduce clustering
     SIZE_PRESETS = {
-        'small': {'bar_width': 30, 'sine_width': 40, 'sine_height': 7},
-        'medium': {'bar_width': 50, 'sine_width': 60, 'sine_height': 9},
-        'large': {'bar_width': 80, 'sine_width': 100, 'sine_height': 15},
-        'xl': {'bar_width': 120, 'sine_width': 150, 'sine_height': 20}
+        'small': {'bar_width': 30, 'sine_width': 40, 'sine_height': 12},
+        'medium': {'bar_width': 50, 'sine_width': 60, 'sine_height': 16},
+        'large': {'bar_width': 80, 'sine_width': 100, 'sine_height': 25},
+        'xl': {'bar_width': 120, 'sine_width': 150, 'sine_height': 35}
     }
     
     parser = argparse.ArgumentParser(description="Simulate walking steps on an Android emulator and display a live graph.")
