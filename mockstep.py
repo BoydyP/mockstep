@@ -1,13 +1,15 @@
-import telnetlib
 import time
 import math
 import argparse
 import os
+from telnet import TelnetConnection
 from terminal_graphs import DualGraph
 
 # --- Simulation Constants ---
 AMPLITUDE = 2.0
 Y_BASELINE = 9.8
+FREQUENCY = 1.25
+SLEEP_TIME = 0.1
 
 
 def connect_to_emulator(host, port, auth_token):
@@ -15,7 +17,7 @@ def connect_to_emulator(host, port, auth_token):
     Establishes and authenticates a telnet connection to the Android emulator.
     """
     try:
-        emulator = telnetlib.Telnet(host, port, timeout=10)
+        emulator = TelnetConnection(host, port, timeout=10)
         emulator.read_until(b"OK", timeout=10)
 
         if not auth_token:
@@ -47,16 +49,7 @@ def set_sensor_data(emulator, sensor, x, y, z):
         print(f"An error occurred while setting {sensor} data: {e}")
 
 def generate_walking_acceleration(step):
-    """
-    Generates accelerometer data that simulates a realistic walking pattern.
-    """
-    frequency = 1.25  # Approximate frequency for 120 steps/min with a 0.1s sleep
-
-    x = 0.0
-    y = Y_BASELINE + AMPLITUDE * math.sin(frequency * step)
-    z = 0.0
-
-    return x, y, z
+    return 0.0, Y_BASELINE + AMPLITUDE * math.sin(FREQUENCY * step), 0.0
 
 def run_simulation(emulator, bar_width=50, sine_width=60, sine_height=9):
     """
@@ -65,17 +58,10 @@ def run_simulation(emulator, bar_width=50, sine_width=60, sine_height=9):
     step_counter = 0
     previous_y = Y_BASELINE
     was_rising = False
-    start_time = time.time()
-    
-    # Core tunable parameters for walking pace control
-    frequency = 1.25      # Tunable: walking pace (steps per time)
-    sleep_time = 0.1      # Tunable: update rate between iterations
-    amplitude = AMPLITUDE # Tunable: step intensity/force
-    
-    # Initialize the dual graph with dynamic dimensions
+
     dual_graph = DualGraph(
-        bar_width=bar_width, 
-        bar_range=(Y_BASELINE - amplitude, Y_BASELINE + amplitude),
+        bar_width=bar_width,
+        bar_range=(Y_BASELINE - AMPLITUDE, Y_BASELINE + AMPLITUDE),
         sine_width=sine_width, 
         sine_height=sine_height,
         sine_range=(-1, 1)
@@ -83,7 +69,7 @@ def run_simulation(emulator, bar_width=50, sine_width=60, sine_height=9):
     
     print(f"\nSimulating walking steps and displaying live graph...")
     print(f"Display size: Bar={bar_width}, Sine={sine_width}x{sine_height}")
-    print(f"Walking parameters: frequency={frequency}, sleep={sleep_time}s, amplitude={amplitude}")
+    print(f"Walking parameters: frequency={FREQUENCY}, sleep={SLEEP_TIME}s, amplitude={AMPLITUDE}")
     print("-" * max(bar_width + 20, sine_width + 20))  # Dynamic width
     print()  # Extra space for the graph area
     
@@ -95,7 +81,7 @@ def run_simulation(emulator, bar_width=50, sine_width=60, sine_height=9):
             
             # Calculate sine value for visualization that exactly matches accelerometer data
             # Both use the same sine calculation to ensure perfect synchronization
-            sine_value = math.sin(frequency * step_counter)
+            sine_value = math.sin(FREQUENCY * step_counter)
             
             # Step detection logic (uses integer-based y values for accuracy)
             is_rising_now = y > previous_y
@@ -107,7 +93,7 @@ def run_simulation(emulator, bar_width=50, sine_width=60, sine_height=9):
             was_rising = is_rising_now
             previous_y = y
             step_counter += 1
-            time.sleep(sleep_time)
+            time.sleep(SLEEP_TIME)
     except KeyboardInterrupt:
         print("\n\nStopping simulation.")
     finally:

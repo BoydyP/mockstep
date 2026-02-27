@@ -125,10 +125,6 @@ class SineWaveGraph:
             else:
                 self.row_labels.append(f"{row_value:5.2f}|")
     
-    def add_point(self, value):
-        """Add a new data point to the sine wave buffer."""
-        self.buffer.add_value(value)
-    
     def _value_to_row(self, value):
         """Convert a value to its corresponding row position (0 = top, height-1 = bottom)."""
         # Clamp value to range
@@ -140,58 +136,6 @@ class SineWaveGraph:
         
         return row
     
-    def render(self):
-        """Render animated sine wave with trail effect showing temporal progression."""
-        # Initialize rows
-        rows = [label + " " for label in self.row_labels]
-        
-        # Get the buffered values (oldest to newest)
-        values = self.buffer.get_display_values()
-        
-        # Plot each point in the buffer with trail effect
-        for i, value in enumerate(values):
-            target_row = self._value_to_row(value)
-            row_idx = int(round(target_row))
-            
-            if 0 <= row_idx < self.height:
-                # Create trail effect - newest point is brightest
-                age = len(values) - i - 1  # 0 = newest, increasing = older
-                
-                if age == 0:  # Current/newest point
-                    char = "●"  # Solid dot for current position
-                elif age < 5:  # Recent trail
-                    char = "•"  # Medium dot
-                elif age < 15:  # Older trail
-                    char = "·"  # Light dot
-                else:  # Very old trail
-                    char = "."  # Faint dot
-                
-                # Ensure we don't go beyond the row length
-                while len(rows[row_idx]) <= len(self.row_labels[0]) + i:
-                    rows[row_idx] += " "
-                
-                # Replace the character at this position
-                row_list = list(rows[row_idx])
-                if len(self.row_labels[0]) + i < len(row_list):
-                    row_list[len(self.row_labels[0]) + i] = char
-                rows[row_idx] = "".join(row_list)
-        
-        # Ensure all rows are the same length
-        max_length = max(len(row) for row in rows)
-        for i in range(len(rows)):
-            rows[i] = rows[i].ljust(max_length)
-        
-        # Add current value indicator
-        current_value = self.buffer.get_current_value()
-        if current_value is not None:
-            current_row = int(round(self._value_to_row(current_value)))
-            if 0 <= current_row < self.height:
-                rows[current_row] += f" ← Current: {current_value:+.2f}"
-        
-        # Print the graph
-        for row in rows:
-            print(row)
-
 
 class DualGraph:
     """
@@ -208,7 +152,7 @@ class DualGraph:
     def plot(self, accel_value, sine_value, step_impact=False):
         """Plot both the accelerometer bar and sine wave point with in-place updates."""
         # Add sine wave data point
-        self.sine_graph.add_point(sine_value)
+        self.sine_graph.buffer.add_value(sine_value)
         
         # If not first render, move cursor up to overwrite previous output
         if not self.first_render:
@@ -246,14 +190,7 @@ class DualGraph:
         values = self.sine_graph.buffer.get_display_values()
         
         # Initialize rows with labels
-        rows = []
-        for i in range(self.sine_graph.height):
-            row_value = self.sine_graph.max_val - (i * (self.sine_graph.max_val - self.sine_graph.min_val) / (self.sine_graph.height - 1))
-            if abs(row_value) < 0.01:
-                label = " 0.0 |"
-            else:
-                label = f"{row_value:5.2f}|"
-            rows.append(label + " " * self.sine_graph.width)
+        rows = [label + " " * self.sine_graph.width for label in self.sine_graph.row_labels]
         
         # Plot points with trail effect
         # Only plot if we have actual data in the buffer
