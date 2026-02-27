@@ -1,5 +1,6 @@
 import socket
 
+
 class TelnetConnection:
     def __init__(self, host, port, timeout=10):
         self.sock = socket.create_connection((host, port), timeout=timeout)
